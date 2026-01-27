@@ -4,7 +4,7 @@
     "slug": "WineCellar",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/icon-cave-de-vin.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "splash": {
