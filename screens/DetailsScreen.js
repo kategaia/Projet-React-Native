@@ -33,6 +33,40 @@ function DetailsScreen({ route }) {
       key: "Région",
       value: region,
     },
+    { key:"Variété", 
+      value: grape
+    },
+    { key:"Seconde variété",
+      value: grape2
+    },
+    {
+      key: "Caractéristiques",
+      value: characteristics,
+    }, 
+    { key: "Prix",
+      value: price + " €"
+    },
+    {
+      key: "Millésime",
+      value: vintage,
+    },
+    {
+      key: "Appellation",
+      value: appellation,
+    },
+    {
+      key:"Type",
+      value: type,
+    },
+    { key: "Style",
+      value: style,
+    },
+    { key: "Contenance",
+      value: capacity + " cl"
+    },
+    { key: "Fermeture",
+      value: closure,
+    }
   ];
 
   return (
@@ -46,17 +80,6 @@ function DetailsScreen({ route }) {
           );
         }
       })}
-
-      <Text style={styles.text}> Variété : {grape}</Text>
-      <Text style={styles.text}> Seconde variété (si présente) : {grape2}</Text>
-      <Text style={styles.text}> Caractéristiques : {characteristics}</Text>
-      <Text style={styles.text}> Prix : {price} €</Text>
-      <Text style={styles.text}> Millésime : {vintage}</Text>
-      <Text style={styles.text}> Appellation : {appellation}</Text>
-      <Text style={styles.text}> Type : {type}</Text>
-      <Text style={styles.text}> Style : {style}</Text>
-      <Text style={styles.text}> Contenance : {capacity} cl</Text>
-      <Text style={styles.text}> Fermeture : {closure}</Text>
       <Text style={styles.description}>
         {" "}
         Description : {"\n"} {description}
