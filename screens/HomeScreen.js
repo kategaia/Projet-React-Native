@@ -15,6 +15,9 @@ export default function HomeScreen({ navigation }) {
         <Pressable style={styles.button} onPress={() => navigation.navigate('Vin')}>
             <Text style={styles.buttonText}>Liste des Vins</Text>
         </Pressable>
+        <Pressable style={styles.button} onPress={() => navigation.navigate('Cave')}>
+            <Text style={styles.buttonText}>Vos caves à vins</Text>
+        </Pressable>
     </View>
   );
 }
@@ -24,7 +27,6 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#ffffff',
     alignItems: 'center',
-    justifyContent: 'center',
   },
   img: {
     width: 350,
@@ -35,8 +37,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#8B0000',
     padding: 10,
     borderRadius: 5,
-    marginBottom: 20,
-    marginTop: 30,
+    marginTop: 15,
+    width: '80%',
+    alignItems: 'center'
     },
     buttonText: {
     color: '#fff',

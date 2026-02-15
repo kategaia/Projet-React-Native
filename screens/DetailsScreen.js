@@ -62,7 +62,7 @@ function DetailsScreen({ route }) {
       value: style,
     },
     { key: "Contenance",
-      value: capacity + " cl"
+      value: capacity 
     },
     { key: "Fermeture",
       value: closure,
