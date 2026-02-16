@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "WineCellar",
-    "slug": "WineCellar",
+    "name": "WineCellular",
+    "slug": "WineCellular",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon-cave-de-vin.png",

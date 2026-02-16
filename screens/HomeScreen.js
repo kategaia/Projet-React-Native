@@ -4,7 +4,7 @@ import { StyleSheet, Text, View, Image, Pressable, FlatList, } from 'react-nativ
 export default function HomeScreen({ navigation }) {
   return (
     <View style={styles.container}>
-        <Text style={styles.title}>Welcome to Wine Cellular !</Text>
+        <Text style={styles.title}>Welcome to WineCellular !</Text>
         <StatusBar style="auto" />
         <Image source={require('../assets/2728103.png')} style={styles.img} />
         <Text style={styles.text}>Votre application de gestion de cave à vin.

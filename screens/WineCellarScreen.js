@@ -4,15 +4,17 @@ import {
   ActivityIndicator,
   FlatList,
   Modal,
-  Button,
-  Alert
+  Alert,
+  ScrollView,
+  TouchableOpacity,
+  TextInput,
 } from "react-native";
 import { useEffect, useState } from "react";
 import {
   getWineCellars,
   getBottlesForCellar,
   addBottleToCellar,
-  deleteBottleFromCellar
+  deleteBottleFromCellar,
 } from "../services/fire";
 
 import WineCellarCard from "../components/WineCellarCard";
@@ -22,12 +24,16 @@ import BottleForm from "../components/BottleForm";
 export default function WineCellarScreen() {
   const [winecellars, setWinecellars] = useState([]);
   const [loading, setLoading] = useState(true);
+
   const [selectedWinecellar, setSelectedWinecellar] = useState(null);
   const [visible, setVisible] = useState(false);
 
   const [bottles, setBottles] = useState([]);
   const [bottleModalVisible, setBottleModalVisible] = useState(false);
   const [addBottleVisible, setAddBottleVisible] = useState(false);
+
+  // 🔎 Recherche bouteilles
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     getWineCellars((posts) => {
@@ -38,6 +44,7 @@ export default function WineCellarScreen() {
 
   const handleShowBottles = (cellar) => {
     setSelectedWinecellar(cellar);
+    setSearchQuery(""); // reset recherche à l'ouverture
 
     getBottlesForCellar(cellar.id, (data) => {
       setBottles(data);
@@ -45,85 +52,147 @@ export default function WineCellarScreen() {
     });
   };
 
-  return (
-    <View style={{ flex: 1 }}>
-      {loading ? (
-  <ActivityIndicator />
-) : (
-  <>
-    <View style={{ padding: 12 }}>
-      <Button
-        title="Ajouter une cave"
-        onPress={() => {
-          setSelectedWinecellar(null); // mode création
-          setVisible(true);            // ouvre le formulaire
-        }}
-      />
-    </View>
+  const filteredBottles = bottles.filter((bottle) => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return true;
 
-    <FlatList
-      data={winecellars}
-      renderItem={({ item }) => (
-        <WineCellarCard
-          winecellar={item}
-          setSelectedWinecellar={setSelectedWinecellar}
-          setVisible={setVisible}
-          onShowBottles={handleShowBottles}
-        />
+    return (
+      bottle?.name?.toLowerCase().includes(q) ||
+      bottle?.position?.toLowerCase().includes(q) ||
+      bottle?.vintage?.toString().includes(q)
+    );
+  });
+
+  return (
+    <View style={styles.container}>
+      {loading ? (
+        <ActivityIndicator size="large" color="#8B0000" />
+      ) : (
+        <>
+          <View style={styles.header}>
+            <TouchableOpacity
+              style={styles.primaryButton}
+              onPress={() => {
+                setSelectedWinecellar(null);
+                setVisible(true);
+              }}
+            >
+              <Text style={styles.primaryButtonText}>+ Ajouter une cave</Text>
+            </TouchableOpacity>
+          </View>
+
+          <FlatList
+            data={winecellars}
+            keyExtractor={(item) => item.id}
+            contentContainerStyle={styles.listContent}
+            renderItem={({ item }) => (
+              <WineCellarCard
+                winecellar={item}
+                setSelectedWinecellar={setSelectedWinecellar}
+                setVisible={setVisible}
+                onShowBottles={handleShowBottles}
+              />
+            )}
+          />
+        </>
       )}
-      keyExtractor={(item) => item.id}
-    />
-  </>
-)}
 
       {/* MODAL EDIT CAVE */}
-      <Modal visible={visible} animationType="slide">
-        <View style={{ padding: 20 }}>
-          <WineCellarForm
-            setVisible={setVisible}
-            selectedWinecellar={selectedWinecellar}
-          />
-          <Button title="Fermer" onPress={() => setVisible(false)} />
+      <Modal visible={visible} animationType="fade" transparent>
+        <View style={styles.overlay}>
+          <View style={styles.modalCard}>
+            <Text style={styles.modalTitle}>
+              {selectedWinecellar
+                ? "Modifier la cave"
+                : "Créer une nouvelle cave"}
+            </Text>
+
+            <ScrollView showsVerticalScrollIndicator={false}>
+              <WineCellarForm
+                setVisible={setVisible}
+                selectedWinecellar={selectedWinecellar}
+              />
+            </ScrollView>
+
+            <TouchableOpacity
+              style={styles.secondaryButton}
+              onPress={() => setVisible(false)}
+            >
+              <Text style={styles.secondaryButtonText}>Fermer</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </Modal>
 
       {/* MODAL BOUTEILLES */}
-      <Modal visible={bottleModalVisible} animationType="slide">
-        <View style={{ flex: 1, padding: 20 }}>
+      <Modal visible={bottleModalVisible} animationType="fade" transparent>
+        <View style={styles.overlay}>
+          <View style={styles.modalCardLarge}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>
+                {selectedWinecellar?.name ?? "Contenu de la cave"}
+              </Text>
 
-          <Button
-            title="Ajouter une bouteille"
-            onPress={() => setAddBottleVisible(true)}
-          />
-
-          <FlatList
-            data={bottles}
-            keyExtractor={(item) => item.id}
-            renderItem={({ item }) => (
-              <View
-                style={{
-                  paddingVertical: 12,
-                  borderBottomWidth: 1,
-                  borderColor: "#ddd",
-                }}
+              <TouchableOpacity
+                style={styles.primaryButtonSmall}
+                onPress={() => setAddBottleVisible(true)}
               >
-                <Text style={{ fontSize: 18, fontWeight: "600" }}>
-                  {item.name}
-                </Text>
-                <Text>Type : {item.type ?? "-"}</Text>
-                <Text>Millésime : {item.vintage ?? "-"}</Text>
-                <Text>Prix : {item.price ?? "-"} €</Text>
-                <Text>Domaine : {item.domainName ?? "-"}</Text>
-                <Text>Pays : {item.country ?? "-"}</Text>
-                <Text>Cépage : {item.grapeVariety ?? "-"}</Text>
-                <Text>Appellation : {item.appellation ?? "-"}</Text>
-                <Text>Accord : {item.compatibleFood ?? "-"}</Text>
-                <Text>Contenance : {item.bottleCapacity ?? "-"} L</Text>
+                <Text style={styles.primaryButtonText}>Ajouter</Text>
+              </TouchableOpacity>
+            </View>
 
-                <View style={{ marginTop: 8 }}>
-                  <Button
-                    title="Supprimer"
-                    color="red"
+            {/* 🔎 Barre de recherche */}
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Rechercher par nom, position ou année..."
+              placeholderTextColor="#888"
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+            />
+
+            <FlatList
+              data={filteredBottles}
+              keyExtractor={(item) => item.id}
+              contentContainerStyle={{ paddingBottom: 10 }}
+              renderItem={({ item }) => (
+                <View style={styles.bottleCard}>
+                  <Text style={styles.bottleTitle}>{item.name}</Text>
+
+                  <View style={styles.bottleDetails}>
+                    <Text style={styles.detailText}>
+                      Type : {item.type ?? "-"}
+                    </Text>
+                    <Text style={styles.detailText}>
+                      Millésime : {item.vintage ?? "-"}
+                    </Text>
+                    <Text style={styles.detailText}>
+                      Prix : {item.price ?? "-"} €
+                    </Text>
+                    <Text style={styles.detailText}>
+                      Domaine : {item.domain ?? "-"}
+                    </Text>
+                    <Text style={styles.detailText}>
+                      Pays : {item.country ?? "-"}
+                    </Text>
+                    <Text style={styles.detailText}>
+                      Cépage : {item.grapeVariety ?? "-"}
+                    </Text>
+                    <Text style={styles.detailText}>
+                      Appellation : {item.appelation ?? "-"}
+                    </Text>
+                    <Text style={styles.detailText}>
+                      Contenance : {item.bottleCapacity ?? "-"} L
+                    </Text>
+                    <Text style={styles.detailText}>
+                      Accord : {item.compatibleFood ?? "-"}
+                    </Text>
+                    <Text style={styles.detailText}>
+                      Position : {item.position ?? "-"}
+                    </Text>
+                  </View>
+
+                  <TouchableOpacity
+                    style={styles.deleteButton}
                     onPress={() =>
                       Alert.alert(
                         "Confirmation",
@@ -136,40 +205,210 @@ export default function WineCellarScreen() {
                             onPress: () =>
                               deleteBottleFromCellar(
                                 selectedWinecellar.id,
-                                item
+                                item,
                               ),
                           },
-                        ]
+                        ],
                       )
                     }
-                  />
+                  >
+                    <Text style={styles.deleteButtonText}>Supprimer</Text>
+                  </TouchableOpacity>
                 </View>
-              </View>
-            )}
-          />
+              )}
+            />
 
-          <Button
-            title="Fermer"
-            onPress={() => {
-              setBottleModalVisible(false);
-            }}
-          />
+            <TouchableOpacity
+              style={styles.secondaryButton}
+              onPress={() => {
+                setBottleModalVisible(false);
+                setSearchQuery("");
+              }}
+            >
+              <Text style={styles.secondaryButtonText}>Fermer</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </Modal>
 
       {/* MODAL AJOUT BOUTEILLE */}
-      <Modal visible={addBottleVisible} animationType="slide">
-        <View style={{ flex: 1 }}>
-          <BottleForm
-            onClose={() => setAddBottleVisible(false)}
-            onSubmit={async (data) => {
-                console.log("selectedWinecellar:", selectedWinecellar);
-              await addBottleToCellar(selectedWinecellar.id, data);
-              setAddBottleVisible(false);
-            }}
-          />
+      <Modal visible={addBottleVisible} animationType="fade" transparent>
+        <View style={styles.overlay}>
+          <View style={styles.modalCardScrollable}>
+            <Text style={styles.modalTitle}>Ajouter une bouteille</Text>
+
+            <ScrollView showsVerticalScrollIndicator={false}>
+              <BottleForm
+                onClose={() => setAddBottleVisible(false)}
+                onSubmit={async (data) => {
+                  await addBottleToCellar(selectedWinecellar.id, data);
+                  setAddBottleVisible(false);
+                }}
+              />
+            </ScrollView>
+
+            <TouchableOpacity
+              style={styles.secondaryButton}
+              onPress={() => setAddBottleVisible(false)}
+            >
+              <Text style={styles.secondaryButtonText}>Fermer</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </Modal>
     </View>
   );
 }
+
+const styles = {
+  container: {
+    flex: 1,
+    backgroundColor: "#ffffff",
+  },
+
+  header: {
+    padding: 16,
+  },
+
+  listContent: {
+    paddingBottom: 20,
+  },
+
+  overlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.45)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
+  modalCard: {
+    width: "90%",
+    backgroundColor: "#fff",
+    borderRadius: 18,
+    padding: 20,
+    elevation: 8,
+  },
+
+  modalCardLarge: {
+    width: "95%",
+    height: "80%",
+    backgroundColor: "#fff",
+    borderRadius: 18,
+    padding: 20,
+    elevation: 8,
+  },
+
+  modalCardScrollable: {
+    width: "90%",
+    maxHeight: "85%",
+    backgroundColor: "#fff",
+    borderRadius: 18,
+    padding: 20,
+    elevation: 8,
+  },
+
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    marginBottom: 12,
+  },
+
+  modalHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 10,
+  },
+
+  primaryButton: {
+    backgroundColor: "#8B0000",
+    padding: 12,
+    borderRadius: 10,
+    alignItems: "center",
+  },
+
+  primaryButtonSmall: {
+    backgroundColor: "#8B0000",
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 8,
+  },
+
+  primaryButtonText: {
+    color: "#fff",
+    fontWeight: "600",
+  },
+
+  secondaryButton: {
+    marginTop: 12,
+    padding: 10,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#8B0000",
+    alignItems: "center",
+  },
+
+  secondaryButtonText: {
+    color: "#8B0000",
+    fontWeight: "600",
+  },
+
+  searchInput: {
+    backgroundColor: "#f2f2f2",
+    padding: 10,
+    borderRadius: 10,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: "#ddd",
+  },
+
+  emptyText: {
+    textAlign: "center",
+    color: "#777",
+    marginTop: 20,
+  },
+
+  bottleCard: {
+    backgroundColor: "#f5f5f5",
+    padding: 14,
+    borderRadius: 12,
+    marginBottom: 12,
+  },
+
+  bottleTitle: {
+    fontSize: 16,
+    fontWeight: "600",
+  },
+
+  bottleInfo: {
+    fontSize: 14,
+    color: "#555",
+    marginTop: 4,
+  },
+
+  bottleMeta: {
+    fontSize: 13,
+    color: "#666",
+    marginTop: 6,
+  },
+
+  bottleDetails: {
+    marginTop: 8,
+  },
+
+  detailText: {
+    fontSize: 14,
+    marginBottom: 3,
+    color: "#444",
+  },
+
+  deleteButton: {
+    marginTop: 10,
+    alignSelf: "flex-start",
+  },
+
+  deleteButtonText: {
+    color: "#b00020",
+    fontWeight: "600",
+  },
+};
